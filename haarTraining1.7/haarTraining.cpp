@@ -1426,7 +1426,7 @@ void icvBoost(int maxweaksplits, int stage_all, CvIntHaarFeatures* haarFeatures,
 			start = clock();
 			icvPrecalculate(stage, num_pos + num_neg, haarTrainingData, haarFeatures, numprecalculated, SAVE_FEATURE_FILE, featdirname);
 			end = clock();
-			printf("特征计算，耗时%d\n", (end - start) / CLOCKS_PER_SEC * 1000);
+			printf("特征计算，耗时%f\n", (end - start) / CLOCKS_PER_SEC * 1000);
 		}
 		//以下用adaboost训练featurenumber个弱分类器
 		while (current_falsealarms > maxfalsealarms && (!maxweaksplits || (featurenumber < maxweaksplits)))
@@ -1855,13 +1855,13 @@ void myHaarTraining(const char* dirname,
 
 	//boost过程
 	//计算特征
-//	icvPrecalculate(0,npos+nneg,training_data, haar_features,numprecalculated, SAVE_FEATURE_FILE, featuredir);
+	icvPrecalculate(0,npos+nneg,training_data, haar_features,numprecalculated, SAVE_FEATURE_FILE, featuredir);
 	calc_feature_time = clock();
 	std::cout << "特征计算（排序）耗时：" << (calc_feature_time - read_image_time) / CLOCKS_PER_SEC * 1000 << "ms" << endl;
 	
 	//开始级联计算
-//	icvBoost(maxtreesplits, nstages, haar_features, training_data,
-//		featuredir, dirname, npos, nneg, numsplits, equalweights, dirname,minhitrate,maxfalsealarm,winsize, numprecalculated);
+	icvBoost(maxtreesplits, nstages, haar_features, training_data,
+		featuredir, dirname, npos, nneg, numsplits, equalweights, dirname,minhitrate,maxfalsealarm,winsize, numprecalculated);
 	combineXml(dirname, winsize);
 
 	_MY_END_
