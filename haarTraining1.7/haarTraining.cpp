@@ -1397,28 +1397,17 @@ void icvBoost(int maxweaksplits, int stage_all, CvIntHaarFeatures* haarFeatures,
 			neg_next = 0;
 			for (int sss = 0;sss < sampleNumber;sss++)
 			{
-				//if ((predit_result[sss] == 0) && (haarTrainingData->cls.data.fl[sss] == 1.0))  //fn
 				if (haarTrainingData->cls.data.fl[sss] == 1.0)  //fn
 				{
 					if (pos_next >= cvposdata->count)
 					{
 						pos_next = 0;
 						printf("正样本已经用完，开始下一轮\n");
-						//	delete[]vector_feat;
-						//	delete[]eval;
-						//	delete[]predit_result;
-						//	delete[]idx;
-						//	return;
 					}
 
 					int res = replacePosPictrueStrengthen(haarFeatures, cascadeClassifier, haarTrainingData, sss, pos_next, mysize);
 					pos_next++;
-
-					//	replacePictrue(haarTrainingData, num_pos, sss, pos_next, mysize);
-
-					//	pos_next++;
 				}
-				//else if ((predit_result[sss] == 0.0) && (haarTrainingData->cls.data.fl[sss] == 0.0))
 				else if (haarTrainingData->cls.data.fl[sss] == 0.0)
 				{
 
@@ -1426,18 +1415,9 @@ void icvBoost(int maxweaksplits, int stage_all, CvIntHaarFeatures* haarFeatures,
 					{
 						neg_next = 0;
 						printf("负样本已经用完,下一轮开始\n");
-						//	delete[]vector_feat;
-						//	delete[]eval;
-						//	delete[]predit_result;
-						//	delete[]idx;
-						//	return;
 					}
 					int res = replaceNegPictrueStrengthen(haarFeatures, cascadeClassifier, haarTrainingData, sss, neg_next, mysize);
 					neg_next++;
-
-
-					//	replacePictrue(haarTrainingData, num_pos, sss, neg_next, mysize);
-					//	neg_next++;
 				}
 
 			}
@@ -1446,7 +1426,7 @@ void icvBoost(int maxweaksplits, int stage_all, CvIntHaarFeatures* haarFeatures,
 			start = clock();
 			icvPrecalculate(stage, num_pos + num_neg, haarTrainingData, haarFeatures, numprecalculated, SAVE_FEATURE_FILE, featdirname);
 			end = clock();
-			printf("特征计算时间%f\n", (end - start) / CLOCKS_PER_SEC * 1000);
+			printf("特征计算，耗时%d\n", (end - start) / CLOCKS_PER_SEC * 1000);
 		}
 		//以下用adaboost训练featurenumber个弱分类器
 		while (current_falsealarms > maxfalsealarms && (!maxweaksplits || (featurenumber < maxweaksplits)))
