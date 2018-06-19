@@ -748,16 +748,23 @@ static int replacePictrueStrengthen(CvIntHaarFeatures* haar_features,MyCascadeCl
 		address = postion * (mysize.width + 1)*(mysize.height + 1) + address;
 		memcpy(address, tempSum->data.i, sizeof(int)*(mysize.width + 1)*(mysize.height + 1));
 		result = 0;
+		//cout<<"nn"<<replace_postion << endl;
 	}
     while(result)
 	{
 		replace_postion++;
-		//判断样本是否还存在
-		if((postion > num_pos_all)&&(replace_postion>=cvposdata->count))
+		//cout << "替换"<<replace_postion << endl;
+		if (replace_postion == 70972)
 		{
-			return POSISOVER;
-		}else if ((postion <= num_pos_all) && (replace_postion>=cvposdata->count))
+			int mm;
+			mm = 1;
+		}
+		//判断样本是否还存在
+		if((postion > num_pos_all)&&(replace_postion>=cvbgdata->count))
+		{
 			return NEGISOVER;
+		}else if ((postion <= num_pos_all) && (replace_postion>=cvposdata->count))
+			return POSISOVER;
 		if (postion >= num_pos_all)
 		{
 			tempMat = transMat(tempMat, cvbgdata->filename[replace_postion]);
@@ -785,6 +792,7 @@ static int replacePictrueStrengthen(CvIntHaarFeatures* haar_features,MyCascadeCl
 		//负样本错误检测 fp
 		else if ((predictSignal(haar_features, tempSum, classifier.size, classifier) == 1) && (labels == 0))
 		{
+		//	cout << "nn" << replace_postion << endl;
 			int *address = training_data->sum.data.i;
 			address = postion * (mysize.width + 1)*(mysize.height + 1) + address;
 			memcpy(address, tempSum->data.i, sizeof(int)*(mysize.width + 1)*(mysize.height + 1));
@@ -1164,8 +1172,144 @@ int* predict(int* preResult, float thresold,int pictureNum, CvIntHaarFeatures* h
 	delete[]at;
 	return preResult;
 }
+/*
+*加强替换替换图片，用于级联
+*/
+static int replaceNegPictrueStrengthen(CvIntHaarFeatures* haar_features, MyCascadeClassifier classifier, CvHaarTrainigData* training_data, int postion, int &replace_postion, MySize mysize)
+{
+	int *address = nullptr;
+	float normfactor = 0.0;
+	MyMat *tempMat = createMyMat(mysize.height, mysize.width, ONE_CHANNEL, UCHAR_TYPE);                                  //注意最后要释放	
+	MyMat *tempSum = createMyMat(mysize.height + 1, mysize.width + 1, ONE_CHANNEL, INT_TYPE);//注意最后要释放
+	/*
+	tempMat = transMat(tempMat, cvbgdata->filename[replace_postion]);
+	if (tempMat != nullptr)
+	{
+		//计算积分图
+		//		myIntegral(tempMat, tempSum, tempTitle, tempSqsum);
+		address = training_data->sum.data.i;
+		GetGrayIntegralImage(tempMat->data.ptr, tempSum->data.i, mysize.width, mysize.height, tempMat->step);		
+	}
+	else
+		return NEGISOVER;
+	int result = 1; //需要循环
+	if (predictSignal(haar_features, tempSum, classifier.size, classifier) == 1) //fp 样本需要加强
+	{
+		address = postion * (mysize.width + 1)*(mysize.height + 1) + address;
+		memcpy(address, tempSum->data.i, sizeof(int)*(mysize.width + 1)*(mysize.height + 1));
+		result = 0;
+
+	}
+	*/
+	while (true)
+	{
+		//判断样本是否还存在
+		if (replace_postion >= cvbgdata->count)
+		{
+			replace_postion = 0;
+			//return NEGISOVER;
+		}
+		tempMat = transMat(tempMat, cvbgdata->filename[replace_postion]);
+		if (tempMat != nullptr)
+		{
+			//计算积分图
+			//		myIntegral(tempMat, tempSum, tempTitle, tempSqsum);
+			address = training_data->sum.data.i;
+			GetGrayIntegralImage(tempMat->data.ptr, tempSum->data.i, mysize.width, mysize.height, tempMat->step);
+		}
+		else
+		{
+			printf("%s is not a picture!\n", cvposdata->filename[replace_postion]);
+			replace_postion++;
+			continue;
+		}
+		//负样本错误检测 fp
+		if (predictSignal(haar_features, tempSum, classifier.size, classifier) == 1)
+		{
 
 
+			int *address = training_data->sum.data.i;
+			address = postion * (mysize.width + 1)*(mysize.height + 1) + address;
+			memcpy(address, tempSum->data.i, sizeof(int)*(mysize.width + 1)*(mysize.height + 1));
+			break;
+		}
+		replace_postion++;
+	}
+
+
+	releaseMyMat(tempMat);
+	releaseMyMat(tempSum);
+	return REPLACESUCCESSFUL;
+
+}
+/*
+*加强替换替换图片，用于级联
+*/
+
+static int replacePosPictrueStrengthen(CvIntHaarFeatures* haar_features, MyCascadeClassifier classifier, CvHaarTrainigData* training_data, int postion, int &replace_postion, MySize mysize)
+{
+	int *address = nullptr;
+	MyMat *tempMat = createMyMat(mysize.height, mysize.width, ONE_CHANNEL, UCHAR_TYPE);                                  //注意最后要释放	
+	MyMat *tempSum = createMyMat(mysize.height + 1, mysize.width + 1, ONE_CHANNEL, INT_TYPE);//注意最后要释放
+	//tempMat = transMat(tempMat, cvposdata->filename[replace_postion]);
+	/*
+	//第一幅直接计算
+	if (tempMat != nullptr)
+	{
+		//计算积分图
+		//		myIntegral(tempMat, tempSum, tempTitle, tempSqsum);
+		address = training_data->sum.data.i;
+		GetGrayIntegralImage(tempMat->data.ptr, tempSum->data.i, mysize.width, mysize.height, tempMat->step);
+	}
+	else
+		return POSISOVER;
+	int result = 1; //需要循环
+	if (predictSignal(haar_features, tempSum, classifier.size, classifier) == 1) //tp 样本需要加强
+	{
+		address = postion * (mysize.width + 1)*(mysize.height + 1) + address;
+		memcpy(address, tempSum->data.i, sizeof(int)*(mysize.width + 1)*(mysize.height + 1));
+		result = 0;
+
+	}
+	*/
+	while (true)
+	{
+
+		//判断样本是否还存在
+		if (replace_postion >= cvposdata->count)
+		{
+			replace_postion = 0;
+		}
+		tempMat = transMat(tempMat, cvposdata->filename[replace_postion]);
+		if (tempMat != nullptr)
+		{
+			//计算积分图
+			address = training_data->sum.data.i;
+			GetGrayIntegralImage(tempMat->data.ptr, tempSum->data.i, mysize.width, mysize.height, tempMat->step);
+		}
+		else
+		{
+			printf("%s is not a picture!\n", cvposdata->filename[replace_postion]);
+			replace_postion++;
+			continue;
+		}
+		//正样检测正确 tp
+		if (predictSignal(haar_features, tempSum, classifier.size, classifier) == 1)
+		{
+			int *address = training_data->sum.data.i;
+			address = postion * (mysize.width + 1)*(mysize.height + 1) + address;
+			memcpy(address, tempSum->data.i, sizeof(int)*(mysize.width + 1)*(mysize.height + 1));
+			break;
+		}
+		replace_postion++;
+	}
+
+
+	releaseMyMat(tempMat);
+	releaseMyMat(tempSum);
+	return REPLACESUCCESSFUL;
+
+}
 static
 /*
 *读入XML
@@ -1225,7 +1369,6 @@ MyCARTClassifier readXML(const char* xmlPath, MyCARTClassifier &strongClassifier
 			}
 			surfaceChild = surfaceChild->NextSiblingElement();
 		}
-		cout << endl;
 		strongClassifier.classifier.push_back(tempWeak);
 		surface = surface->NextSiblingElement("weak");
 	}
@@ -1293,64 +1436,60 @@ void icvBoost(int maxweaksplits, int stage_all, CvIntHaarFeatures* haarFeatures,
 		{
 			//收集tp，fp样本,也就是替换tn，fn样本
 			printf("样本替换\n");
+			pos_next = 0;
+			neg_next = 0;
 			for (int sss = 0;sss < sampleNumber;sss++)
 			{
-				if ((predit_result[sss] == 0) && (haarTrainingData->cls.data.fl[sss] == 1.0))  //fn
+				//if ((predit_result[sss] == 0) && (haarTrainingData->cls.data.fl[sss] == 1.0))  //fn
+				if (haarTrainingData->cls.data.fl[sss] == 1.0)  //fn
 				{
 					if (pos_next >= cvposdata->count)
 					{
-						printf("正样本已经用完\n");
-						delete[]vector_feat;
-						delete[]eval;
-						delete[]predit_result;
-						delete[]idx;
-						return;
+						pos_next = 0;
+						printf("正样本已经用完，开始下一轮\n");
+						//	delete[]vector_feat;
+						//	delete[]eval;
+						//	delete[]predit_result;
+						//	delete[]idx;
+						//	return;
 					}
-					//对样本进行预测
-		//			MyMat *addPic = createMyMat(mysize.height, mysize.width, ONE_CHANNEL, UCHAR_TYPE);//注意释放
-		//			MyMat *addPicSum = createMyMat(mysize.height + 1, mysize.width + 1, ONE_CHANNEL, INT_TYPE);//注意释放
-		//			addPic = transMat(addPic, "e:\\6.png");
-					int  res = replacePictrueStrengthen(haarFeatures, cascadeClassifier,haarTrainingData, number_pos, sss, pos_next, mysize);
-					if (res == POSISOVER)
-					{
-						printf("正样本已经用完\n");
-						delete[]vector_feat;
-						delete[]eval;
-						delete[]predit_result;
-						delete[]idx;
-						return;
-					}
+
+					int res = replacePosPictrueStrengthen(haarFeatures, cascadeClassifier, haarTrainingData, sss, pos_next, mysize);
 					pos_next++;
+
+					//	replacePictrue(haarTrainingData, num_pos, sss, pos_next, mysize);
+
+					//	pos_next++;
 				}
-				else if ((predit_result[sss] == 0.0) && (haarTrainingData->cls.data.fl[sss] == 0.0))
+				//else if ((predit_result[sss] == 0.0) && (haarTrainingData->cls.data.fl[sss] == 0.0))
+				else if (haarTrainingData->cls.data.fl[sss] == 0.0)
 				{
+
 					if (neg_next >= cvbgdata->count)
 					{
-						printf("负样本已经用完\n");
-						delete[]vector_feat;
-						delete[]eval;
-						delete[]predit_result;
-						delete[]idx;
-						return;
+						neg_next = 0;
+						printf("负样本已经用完,下一轮开始\n");
+						//	delete[]vector_feat;
+						//	delete[]eval;
+						//	delete[]predit_result;
+						//	delete[]idx;
+						//	return;
 					}
-			//		replacePictrue(haarTrainingData, number_pos, sss, neg_next, mysize);
-					int res = replacePictrueStrengthen(haarFeatures, cascadeClassifier,haarTrainingData, number_pos, sss, neg_next, mysize);
-					if (res == NEGISOVER)
-					{
-						printf("负样本已经用完\n");
-						delete[]vector_feat;
-						delete[]eval;
-						delete[]predit_result;
-						delete[]idx;
-						return;
-					}
+					int res = replaceNegPictrueStrengthen(haarFeatures, cascadeClassifier, haarTrainingData, sss, neg_next, mysize);
 					neg_next++;
+
+
+					//	replacePictrue(haarTrainingData, num_pos, sss, neg_next, mysize);
+					//	neg_next++;
 				}
 
 			}
-			//计算当前样本特征值
-			printf("特征计算\n");
+			cout << "正样本消耗:" << pos_next << ",负样本消耗:" << neg_next << endl;
+			//计算当前样本特征值		
+			start = clock();
 			icvPrecalculate(stage, num_pos + num_neg, haarTrainingData, haarFeatures, numprecalculated, SAVE_FEATURE_FILE, featdirname);
+			end = clock();
+			printf("特征计算时间%f\n", (end - start) / CLOCKS_PER_SEC * 1000);
 		}
 		//以下用adaboost训练featurenumber个弱分类器
 		while (current_falsealarms > maxfalsealarms && (!maxweaksplits || (featurenumber < maxweaksplits)))
@@ -1548,7 +1687,8 @@ void icvBoost(int maxweaksplits, int stage_all, CvIntHaarFeatures* haarFeatures,
 						}
 					}
 				}
-			strongClassifier.push_back(currentWeakClassifier);
+
+				strongClassifier.push_back(currentWeakClassifier);
 			//预测
 			eval = predict_sum(eval,num_pos, haarFeatures, haarTrainingData, strongClassifier);
 			//eval 存放总置信度的倍数
@@ -1582,7 +1722,6 @@ void icvBoost(int maxweaksplits, int stage_all, CvIntHaarFeatures* haarFeatures,
 		tempStrongClassifier.threshold = thresold;
 		cascadeClassifier.StrongClassifier.push_back(tempStrongClassifier);
 		cout <<"thresold:"<< thresold <<",falsealarms:"<<current_falsealarms<<",feature_num:"<<featurenumber<<endl;
-		cout << "正样本消耗:" << pos_next<<",负样本消耗:"<<neg_next<<endl;
 		//保存成xml文件
 		saveXML(haarFeatures,stage, strongClassifier, dirname,thresold);
 		stage++;
@@ -1779,13 +1918,13 @@ void myHaarTraining(const char* dirname,
 
 	//boost过程
 	//计算特征
-	icvPrecalculate(0,npos+nneg,training_data, haar_features,numprecalculated, SAVE_FEATURE_FILE, featuredir);
+//	icvPrecalculate(0,npos+nneg,training_data, haar_features,numprecalculated, SAVE_FEATURE_FILE, featuredir);
 	calc_feature_time = clock();
 	std::cout << "特征计算（排序）耗时：" << (calc_feature_time - read_image_time) / CLOCKS_PER_SEC * 1000 << "ms" << endl;
 	
 	//开始级联计算
-	icvBoost(maxtreesplits, nstages, haar_features, training_data,
-		featuredir, dirname, npos, nneg, numsplits, equalweights, dirname,minhitrate,maxfalsealarm,winsize, numprecalculated);
+//	icvBoost(maxtreesplits, nstages, haar_features, training_data,
+//		featuredir, dirname, npos, nneg, numsplits, equalweights, dirname,minhitrate,maxfalsealarm,winsize, numprecalculated);
 	combineXml(dirname, winsize);
 
 	_MY_END_
