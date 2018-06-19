@@ -1181,26 +1181,6 @@ static int replaceNegPictrueStrengthen(CvIntHaarFeatures* haar_features, MyCasca
 	float normfactor = 0.0;
 	MyMat *tempMat = createMyMat(mysize.height, mysize.width, ONE_CHANNEL, UCHAR_TYPE);                                  //注意最后要释放	
 	MyMat *tempSum = createMyMat(mysize.height + 1, mysize.width + 1, ONE_CHANNEL, INT_TYPE);//注意最后要释放
-	/*
-	tempMat = transMat(tempMat, cvbgdata->filename[replace_postion]);
-	if (tempMat != nullptr)
-	{
-		//计算积分图
-		//		myIntegral(tempMat, tempSum, tempTitle, tempSqsum);
-		address = training_data->sum.data.i;
-		GetGrayIntegralImage(tempMat->data.ptr, tempSum->data.i, mysize.width, mysize.height, tempMat->step);		
-	}
-	else
-		return NEGISOVER;
-	int result = 1; //需要循环
-	if (predictSignal(haar_features, tempSum, classifier.size, classifier) == 1) //fp 样本需要加强
-	{
-		address = postion * (mysize.width + 1)*(mysize.height + 1) + address;
-		memcpy(address, tempSum->data.i, sizeof(int)*(mysize.width + 1)*(mysize.height + 1));
-		result = 0;
-
-	}
-	*/
 	while (true)
 	{
 		//判断样本是否还存在
@@ -1251,27 +1231,6 @@ static int replacePosPictrueStrengthen(CvIntHaarFeatures* haar_features, MyCasca
 	int *address = nullptr;
 	MyMat *tempMat = createMyMat(mysize.height, mysize.width, ONE_CHANNEL, UCHAR_TYPE);                                  //注意最后要释放	
 	MyMat *tempSum = createMyMat(mysize.height + 1, mysize.width + 1, ONE_CHANNEL, INT_TYPE);//注意最后要释放
-	//tempMat = transMat(tempMat, cvposdata->filename[replace_postion]);
-	/*
-	//第一幅直接计算
-	if (tempMat != nullptr)
-	{
-		//计算积分图
-		//		myIntegral(tempMat, tempSum, tempTitle, tempSqsum);
-		address = training_data->sum.data.i;
-		GetGrayIntegralImage(tempMat->data.ptr, tempSum->data.i, mysize.width, mysize.height, tempMat->step);
-	}
-	else
-		return POSISOVER;
-	int result = 1; //需要循环
-	if (predictSignal(haar_features, tempSum, classifier.size, classifier) == 1) //tp 样本需要加强
-	{
-		address = postion * (mysize.width + 1)*(mysize.height + 1) + address;
-		memcpy(address, tempSum->data.i, sizeof(int)*(mysize.width + 1)*(mysize.height + 1));
-		result = 0;
-
-	}
-	*/
 	while (true)
 	{
 
@@ -1404,7 +1363,6 @@ void icvBoost(int maxweaksplits, int stage_all, CvIntHaarFeatures* haarFeatures,
 	float maxFalse_real = 1;
 	int pos_next = num_pos;
 	int neg_next = num_neg;   //用于收集样本的指针
-	int T = 0;
 	double start, end, one, two, three, four, five, six;
 	//级联相关参数
 	float current_hitrate = 1.0; //当前命中率
@@ -1429,7 +1387,6 @@ void icvBoost(int maxweaksplits, int stage_all, CvIntHaarFeatures* haarFeatures,
 		stagethresold.clear();			
 		hitRate_real = 0;
 		maxFalse_real = 0;
-		T = 0;
 		strongClassifier.clear();
 		//收集样本
 		if (stage != 0)
